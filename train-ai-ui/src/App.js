@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 
 function App() {
   const [loading, setLoading] = useState(false);
+  const [stations, setStations] = useState([]);
   const [data, setData] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [stationChart, setStationChart] = useState([]);
@@ -17,70 +18,110 @@ function App() {
   const [station, setStation] = useState("");
   const [hour, setHour] = useState("");
 
-  // 🔹 Placeholder Stats
   const [totalRows] = useState(417080);
   const [activeTrains] = useState(1200);
   const [totalStations] = useState(8000);
 
+  // =========================
+  // API FUNCTIONS
+  // =========================
+
   const loadChartData = useCallback(async () => {
-    const res = await fetch("http://127.0.0.1:5000/chart_data");
-    setChartData(await res.json());
+    try {
+      const res = await fetch("http://127.0.0.1:5000/chart_data");
+      const data = await res.json();
+      setChartData(data);
+    } catch (err) {
+      console.error("chart error:", err);
+    }
   }, []);
 
   const loadStationChart = async () => {
-    const res = await fetch("http://127.0.0.1:5000/station_data");
-    setStationChart(await res.json());
+    try {
+      const res = await fetch("http://127.0.0.1:5000/station_data");
+      const data = await res.json();
+      setStationChart(data);
+    } catch (err) {
+      console.error("station chart error:", err);
+    }
   };
+
+  // =========================
+  // MAIN LOAD
+  // =========================
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/predict")
       .then(res => res.json())
-      .then(setData);
+      .then(setData)
+      .catch(err => console.error("predict error:", err));
 
     loadChartData();
     loadStationChart();
+
+    fetch("http://127.0.0.1:5000/stations")
+      .then(res => res.json())
+      .then(data => setStations(data.stations))
+      .catch(err => console.error("stations error:", err));
+
   }, [loadChartData]);
-    useEffect(() => {
-  fetch("http://127.0.0.1:5000/history")
-    .then(res => res.json())
-    .then(data => setHistory(data.history));
-}, []);
+
+  // =========================
+  // HISTORY
+  // =========================
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/history")
+      .then(res => res.json())
+      .then(data => setHistory(data.history))
+      .catch(err => console.error("history error:", err));
+  }, []);
+
+  // =========================
+  // PREDICTION
+  // =========================
+
   const runPrediction = async () => {
-  try {
-    if (!station || !hour) return alert("Enter inputs");
+    try {
+      if (!station || !hour) return alert("Enter inputs");
 
-    setLoading(true);
+      setLoading(true);
 
-    const res = await fetch("http://127.0.0.1:5000/predict_input", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ station_code: station, hour })
-    });
+      const res = await fetch("http://127.0.0.1:5000/predict_input", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ station_code: station, hour })
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!json.prediction) throw new Error();
+      if (!json.prediction && json.prediction !== 0) throw new Error();
 
-    setConfidence(json.confidence);
+      setConfidence(json.confidence);
 
-    let label =
-      json.prediction === 2 ? "🚨 High" :
-      json.prediction === 1 ? "⚠️ Medium" :
-      "✅ Low";
+      let label =
+        json.prediction === 2 ? "🚨 High" :
+        json.prediction === 1 ? "⚠️ Medium" :
+        "✅ Low";
 
-    setResult(label);
+      setResult(label);
 
-    setHistory(prev => [
-      { station, hour, label },
-      ...prev.slice(0, 4)
-    ]);
+      setHistory(prev => [
+        { station, hour, label },
+        ...prev.slice(0, 4)
+      ]);
 
-  } catch {
-    alert("Server error. Try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      console.error(err);
+      alert("Server error. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // UI HELPERS
+  // =========================
 
   const getColor = () => {
     if (confidence > 70) return "bg-green-500";
@@ -93,6 +134,10 @@ function App() {
     { count: 0 }
   );
 
+  // =========================
+  // UI
+  // =========================
+
   return (
     <div className={dark 
       ? "bg-gray-900 text-white min-h-screen transition-all duration-300" 
@@ -102,7 +147,7 @@ function App() {
       <div className={`flex justify-between items-center px-8 py-4 shadow-md ${
         dark ? "bg-gray-800" : "bg-white"
       }`}>
-        <h1 className="text-xl font-bold text-blue-600">RailSense AI</h1>
+        <h1 className="text-xl font-bold text-blue-600">🚆 RailSense AI</h1>
         <button 
           onClick={()=>setDark(!dark)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -113,7 +158,7 @@ function App() {
 
       <div className="p-6">
 
-        {/* STAT TILES */}
+        {/* STATS */}
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           {[ 
             {title:"Total Data Rows", value: totalRows},
@@ -130,7 +175,7 @@ function App() {
           ))}
         </div>
 
-        {/* INPUT + RESULT */}
+        {/* INPUT */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
 
           <motion.div whileHover={{scale:1.02}}
@@ -139,16 +184,24 @@ function App() {
             }`}>
             <h2 className="mb-4 font-semibold">Run Prediction</h2>
 
-            <input
+            {/* DROPDOWN */}
+            <select
               value={station}
-              onChange={e=>setStation(e.target.value)}
-              placeholder="Station Code"
+              onChange={e => setStation(e.target.value)}
               className={`w-full mb-3 p-2 rounded border ${
                 dark ? "bg-gray-700 border-gray-600" : ""
               }`}
-            />
+            >
+              <option value="">Select Station</option>
+              {stations.map((s, i) => (
+                <option key={i} value={s}>{s}</option>
+              ))}
+            </select>
 
             <input
+              type="number"
+              min="0"
+              max="23"
               value={hour}
               onChange={e=>setHour(e.target.value)}
               placeholder="Hour"
@@ -157,18 +210,18 @@ function App() {
               }`}
             />
 
-          <button
-  onClick={runPrediction}
-  className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
->
-  {loading ? "Predicting..." : "Run Prediction"}
-</button>
+            <button
+              onClick={runPrediction}
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            >
+              {loading ? "Predicting..." : "Run Prediction"}
+            </button>
           </motion.div>
 
-          <motion.div initial={{opacity:0}} animate={{opacity:1}}
-            className={`p-6 rounded-xl shadow ${
-              dark ? "bg-gray-800" : "bg-white"
-            }`}>
+          {/* RESULT */}
+          <motion.div className={`p-6 rounded-xl shadow ${
+            dark ? "bg-gray-800" : "bg-white"
+          }`}>
             <h2 className="mb-4 font-semibold">Prediction Result</h2>
 
             {result && <>
@@ -187,14 +240,13 @@ function App() {
           </motion.div>
         </div>
 
-        {/* TOP HOUR */}
-        <div className="text-center mb-6">
+        {/* CHARTS */}
+        <div className="mb-6 text-center">
           <h2 className="font-semibold text-lg">
             🔥 Top Congested Hour: {topHour.hour || "--"}
           </h2>
         </div>
 
-        {/* LINE CHART */}
         <div className={`p-6 rounded-xl shadow mb-6 ${
           dark ? "bg-gray-800" : "bg-white"
         }`}>
@@ -208,7 +260,6 @@ function App() {
           </ResponsiveContainer>
         </div>
 
-        {/* BAR CHART */}
         <div className={`p-6 rounded-xl shadow mb-6 ${
           dark ? "bg-gray-800" : "bg-white"
         }`}>
@@ -232,14 +283,9 @@ function App() {
           ))}
         </div>
 
-        {/* FOOTER */}
-        <div className="text-center mt-10 text-sm opacity-60">
-          Railsense AI @2026 | Built by Derek Dsouza, Suryansh Desai, Mayank Raut, Anish Bandal
-        </div>
-
       </div>
     </div>
   );
-
 }
+
 export default App;

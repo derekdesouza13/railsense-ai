@@ -5,6 +5,7 @@ import {
 import { motion } from "framer-motion";
 
 function App() {
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [stationChart, setStationChart] = useState([]);

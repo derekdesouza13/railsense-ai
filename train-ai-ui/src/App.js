@@ -147,8 +147,12 @@ function App() {
       <div className={`flex justify-between items-center px-8 py-4 shadow-md ${
         dark ? "bg-gray-800" : "bg-white"
       }`}>
-        <h1 className="text-xl font-bold text-blue-600">🚆 RailSense AI</h1>
-        <button 
+<h2 className="mb-4 font-semibold text-lg flex items-center gap-2">
+  🚆 Run Traffic Prediction
+</h2>
+<p className="text-sm opacity-60 mb-4">
+  Select a station and time to predict congestion levels
+</p>        <button 
           onClick={()=>setDark(!dark)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
@@ -185,12 +189,13 @@ function App() {
             <h2 className="mb-4 font-semibold">Run Prediction</h2>
 
             {/* DROPDOWN */}
-            <select
-              value={station}
-              onChange={e => setStation(e.target.value)}
-              className={`w-full mb-3 p-2 rounded border ${
-                dark ? "bg-gray-700 border-gray-600" : ""
-              }`}
+           <select
+  value={station}
+  onChange={e => setStation(e.target.value)}
+  className={`w-full mb-3 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+    dark ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+  }`}
+
             >
               <option value="">Select Station</option>
               {stations.map((s, i) => (
@@ -199,23 +204,29 @@ function App() {
             </select>
 
             <input
-              type="number"
-              min="0"
-              max="23"
-              value={hour}
-              onChange={e=>setHour(e.target.value)}
-              placeholder="Hour"
-              className={`w-full mb-3 p-2 rounded border ${
-                dark ? "bg-gray-700 border-gray-600" : ""
-              }`}
-            />
+  type="number"
+  min="0"
+  max="23"
+  value={hour}
+  onChange={e=>setHour(e.target.value)}
+  placeholder="Enter hour (0–23)"
+  className={`w-full mb-3 p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+    dark ? "bg-gray-700 border-gray-600 text-white" : ""
+  }`}
+/>
 
-            <button
-              onClick={runPrediction}
-              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-            >
-              {loading ? "Predicting..." : "Run Prediction"}
-            </button>
+           {loading && (
+  <p className="text-sm text-blue-500 mb-2 text-center">
+    ⏳ Running prediction...
+  </p>
+)}
+
+<button
+  onClick={runPrediction}
+  className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+>
+  {loading ? "Predicting..." : "🚀 Run Prediction"}
+</button>
           </motion.div>
 
           {/* RESULT */}
@@ -224,19 +235,29 @@ function App() {
           }`}>
             <h2 className="mb-4 font-semibold">Prediction Result</h2>
 
-            {result && <>
-              <h3 className="text-xl font-bold text-blue-500">{result}</h3>
+            {result && (
+  <div className="space-y-4">
 
-              <div className="mt-4">
-                <div className="bg-gray-300 h-3 rounded">
-                  <div
-                    className={`${getColor()} h-3 rounded`}
-                    style={{width:`${confidence}%`}}
-                  ></div>
-                </div>
-                <p className="text-sm mt-1">Confidence: {confidence}%</p>
-              </div>
-            </>}
+    <div className="text-center">
+      <h3 className="text-2xl font-bold text-blue-500">{result}</h3>
+      <p className="text-sm opacity-60">Congestion Level</p>
+    </div>
+
+    <div>
+      <div className="bg-gray-300 h-4 rounded-full overflow-hidden">
+        <div
+          className={`${getColor()} h-4 rounded-full transition-all duration-500`}
+          style={{width:`${confidence}%`}}
+        ></div>
+      </div>
+
+      <p className="text-sm mt-2 text-center">
+        Confidence: <span className="font-semibold">{confidence}%</span>
+      </p>
+    </div>
+
+  </div>
+)}
           </motion.div>
         </div>
 
@@ -279,8 +300,11 @@ function App() {
         }`}>
           <h2 className="mb-3 font-semibold">Prediction History</h2>
           {history.map((h,i)=>(
-            <p key={i}>{h.station} | {h.hour} → {h.label}</p>
-          ))}
+<div key={i} className="p-2 border-b text-sm flex justify-between">
+  <span>{h.station}</span>
+  <span>{h.hour}:00</span>
+  <span className="font-semibold">{h.label}</span>
+</div>          ))}
         </div>
 
       </div>

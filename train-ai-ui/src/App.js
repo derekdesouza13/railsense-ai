@@ -46,7 +46,10 @@ function App() {
     .then(data => setHistory(data.history));
 }, []);
   const runPrediction = async () => {
+  try {
     if (!station || !hour) return alert("Enter inputs");
+
+    setLoading(true);
 
     const res = await fetch("http://127.0.0.1:5000/predict_input", {
       method: "POST",
@@ -55,6 +58,9 @@ function App() {
     });
 
     const json = await res.json();
+
+    if (!json.prediction) throw new Error();
+
     setConfidence(json.confidence);
 
     let label =
@@ -69,11 +75,12 @@ function App() {
       ...prev.slice(0, 4)
     ]);
 
-    setChartData(prev => [
-      ...prev,
-      { hour: parseInt(hour), count: Math.floor(Math.random()*10)+1 }
-    ]);
-  };
+  } catch {
+    alert("Server error. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getColor = () => {
     if (confidence > 70) return "bg-green-500";
@@ -150,12 +157,12 @@ function App() {
               }`}
             />
 
-            <button
-              onClick={runPrediction}
-              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-            >
-              Run Prediction
-            </button>
+          <button
+  onClick={runPrediction}
+  className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+>
+  {loading ? "Predicting..." : "Run Prediction"}
+</button>
           </motion.div>
 
           <motion.div initial={{opacity:0}} animate={{opacity:1}}
@@ -233,6 +240,6 @@ function App() {
       </div>
     </div>
   );
-}
 
+}
 export default App;

@@ -80,6 +80,7 @@ def station_data():
 
     top = df[station_col].value_counts().head(10)
     data = [{"station_code": k, "count": int(v)} for k, v in top.items()]
+    
 
     return jsonify(data)
 # -------------------------
@@ -110,9 +111,12 @@ def predict_input():
 
         station = data.get("station_code")
         hour = int(data.get("hour"))
-
+        
+        # Encode station into number
+        station_encoded = abs(hash(station)) % 1000
+        
         # SAME FEATURES USED FOR TRAINING (keep consistent!)
-        X = [[hour, hour % 7]]
+        X = [[station_encoded, hour]]
 
         # PREDICTION
         prediction = int(model.predict(X)[0])

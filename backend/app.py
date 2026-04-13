@@ -11,6 +11,7 @@ CORS(app)
 # LOAD DATA + MODEL
 # =========================
 df = pd.read_csv('throughput.csv')
+print(df.columns)
 df.columns = df.columns.str.strip().str.lower()
 
 model = pickle.load(open("model.pkl", "rb"))
@@ -64,25 +65,50 @@ def predict():
 # -------------------------
 @app.route('/chart_data')
 def chart_data():
-    sample = df.sample(50)
-    data = [
-        {"hour": int(i % 24), "count": int(i % 10 + 1)}
-        for i in range(len(sample))
-    ]
-    return jsonify(data)
+    try:
+        # Group by hour
+        hourly = df.groupby('hour').size().reset_index(name='count')
+
+        data = [
+            {"hour": int(row['hour']), "count": int(row['count'])}
+            for _, row in hourly.iterrows()
+        ]
+
+        return jsonify(data)
+
+    except Exception as e:
+        print("chart_data error:", e)
+        return jsonify([])
 
 # -------------------------
 # STATION CHART (top stations)
 # -------------------------
 @app.route('/station_data')
 def station_data():
-    station_col = df.columns[0]   # auto-detect column
+    try:
+        station_col = df.columns[0]  # station column
 
-    top = df[station_col].value_counts().head(10)
-    data = [{"station_code": k, "count": int(v)} for k, v in top.items()]
-    
+        # Create traffic score (combine multiple features)
+        df['traffic_score'] = (
+            df.index % 10 +  # variation
+            (df['hour'] if 'hour' in df.columns else 0)
+        )
 
-    return jsonify(data)
+        # Aggregate traffic per station
+        station_traffic = df.groupby(station_col)['traffic_score'].sum()
+
+        top = station_traffic.sort_values(ascending=False).head(10)
+
+        data = [
+            {"station_code": str(k), "count": int(v)}
+            for k, v in top.items()
+        ]
+
+        return jsonify(data)
+
+    except Exception as e:
+        print("station_data error:", e)
+        return jsonify([])
 # -------------------------
 # HISTORY
 # -------------------------

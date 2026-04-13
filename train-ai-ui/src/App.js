@@ -139,17 +139,20 @@ function App() {
   // =========================
 
   return (
-    <div className={dark 
-      ? "bg-gray-900 text-white min-h-screen transition-all duration-300" 
-      : "bg-gray-100 text-gray-900 min-h-screen transition-all duration-300"}>
-
+    <div className={`min-h-screen transition-all duration-500 ${
+  dark
+    ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white"
+    : "bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-900"
+}`}>
       {/* NAVBAR */}
-      <div className={`flex justify-between items-center px-8 py-4 shadow-md ${
-        dark ? "bg-gray-800" : "bg-white"
-      }`}>
-<h2 className="mb-4 font-semibold text-lg flex items-center gap-2">
-  🚆 Run Traffic Prediction
-</h2>
+     <div className={`flex justify-between items-center px-8 py-4 backdrop-blur-lg border-b ${
+  dark 
+    ? "bg-gray-900/70 border-gray-700" 
+    : "bg-white/70 border-gray-200"
+}`}>
+<h1 className="text-xl font-bold tracking-wide bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+  🚆 RailSense AI
+</h1>
 <p className="text-sm opacity-60 mb-4">
   Select a station and time to predict congestion levels
 </p>        <button 
@@ -169,7 +172,10 @@ function App() {
             {title:"Active Trains", value: activeTrains},
             {title:"Total Stations", value: totalStations}
           ].map((item,i)=>(
-            <motion.div key={i} whileHover={{scale:1.05}}
+            <motion.div 
+  key={i} 
+  whileHover={{scale:1.05}}
+  whileTap={{scale:0.98}}
               className={`p-6 rounded-xl shadow-md ${
                 dark ? "bg-gray-800" : "bg-white"
               }`}>
@@ -223,16 +229,22 @@ function App() {
 
 <button
   onClick={runPrediction}
-  className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition font-semibold"
->
+className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-lg hover:scale-[1.03] hover:shadow-lg transition-all font-semibold">
   {loading ? "Predicting..." : "🚀 Run Prediction"}
 </button>
           </motion.div>
 
           {/* RESULT */}
-          <motion.div className={`p-6 rounded-xl shadow ${
-            dark ? "bg-gray-800" : "bg-white"
-          }`}>
+          <motion.div 
+  initial={{opacity:0, y:20}}
+  animate={{opacity:1, y:0}}
+  transition={{duration:0.4}}
+  className={`p-6 rounded-2xl backdrop-blur-lg border shadow-lg ${
+    dark 
+      ? "bg-white/10 border-white/20" 
+      : "bg-white/70 border-gray-200"
+  }`}
+>
             <h2 className="mb-4 font-semibold">Prediction Result</h2>
 
             {result && (

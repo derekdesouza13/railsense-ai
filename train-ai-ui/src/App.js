@@ -290,7 +290,10 @@ className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 ro
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
               <XAxis dataKey="hour" stroke={dark?"#fff":"#000"} />
-              <YAxis stroke={dark?"#fff":"#000"} />
+              <YAxis 
+  stroke={dark?"#fff":"#000"} 
+  domain={[0, 'dataMax + 50']}
+/>
               <Tooltip />
               <Line dataKey="count" stroke="#2563eb"/>
             </LineChart>
@@ -322,7 +325,10 @@ className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 ro
   <span className="font-semibold">{h.label}</span>
 </div>          ))}
         </div>
-
+       {/* FOOTER */}
+<div className="mt-10 text-center text-sm opacity-70">
+  Railsense AI @2026 | Made by Derek Dsouza, Suryansh Desai, Mayank Raut and Anish Bandal
+</div>
       </div>
     </div>
   );

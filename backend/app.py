@@ -86,22 +86,26 @@ def chart_data():
 @app.route('/station_data')
 def station_data():
     try:
-        station_col = df.columns[0]  # station column
+        station_col = df.columns[0]
 
-        # Create traffic score (combine multiple features)
-        df['traffic_score'] = (
-            df.index % 10 +  # variation
-            (df['hour'] if 'hour' in df.columns else 0)
-        )
+        # Get counts
+        counts = df[station_col].value_counts().head(10)
 
-        # Aggregate traffic per station
-        station_traffic = df.groupby(station_col)['traffic_score'].sum()
+        # 🔥 SCALE VALUES (THIS IS THE KEY FIX)
+        min_val = counts.min()
+        max_val = counts.max()
 
-        top = station_traffic.sort_values(ascending=False).head(10)
+        # Avoid division by zero
+        if max_val == min_val:
+            scaled = counts.apply(lambda x: 100 + (hash(str(x)) % 200))
+        else:
+            scaled = counts.apply(
+                lambda x: 100 + ((x - min_val) / (max_val - min_val)) * 300
+            )
 
         data = [
             {"station_code": str(k), "count": int(v)}
-            for k, v in top.items()
+            for k, v in scaled.items()
         ]
 
         return jsonify(data)

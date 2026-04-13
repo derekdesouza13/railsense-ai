@@ -30,7 +30,7 @@ function App() {
     try {
       const res = await fetch("http://127.0.0.1:5000/chart_data");
       const data = await res.json();
-      setChartData(data);
+      setChartData(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("chart error:", err);
     }
@@ -40,7 +40,7 @@ function App() {
     try {
       const res = await fetch("http://127.0.0.1:5000/station_data");
       const data = await res.json();
-      setStationChart(data);
+      setStationChart(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("station chart error:", err);
     }
@@ -59,10 +59,13 @@ function App() {
     loadChartData();
     loadStationChart();
 
-    fetch("http://127.0.0.1:5000/stations")
-      .then(res => res.json())
-      .then(data => setStations(data.stations))
-      .catch(err => console.error("stations error:", err));
+   fetch("http://127.0.0.1:5000/stations")
+  .then(res => res.json())
+  .then(data => {
+    console.log("stations API:", data);
+    setStations(data.stations || data || []);
+  })
+  .catch(err => console.error("stations error:", err));
 
   }, [loadChartData]);
 
@@ -129,11 +132,12 @@ function App() {
     return "bg-red-500";
   };
 
-  const topHour = chartData.reduce(
-    (max, item) => item.count > max.count ? item : max,
-    { count: 0 }
-  );
-
+ const topHour = chartData.length
+  ? chartData.reduce(
+      (max, item) => item.count > max.count ? item : max,
+      { count: 0 }
+    )
+  : {};
   // =========================
   // UI
   // =========================
@@ -204,7 +208,7 @@ function App() {
 
             >
               <option value="">Select Station</option>
-              {stations.map((s, i) => (
+{(stations || []).map((s, i) => (
                 <option key={i} value={s}>{s}</option>
               ))}
             </select>
